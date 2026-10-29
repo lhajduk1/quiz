@@ -1,0 +1,19 @@
+# Local environment files (keep example templates tracked)
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Logs and operating system files
+*.log
+.DS_Store
+
+# Local IDE settings
+.idea/
+.vscode/
+
+# Local Laravel SQLite databases and journal/WAL files
+/api/database/*.sqlite
+/api/database/*.sqlite-*
