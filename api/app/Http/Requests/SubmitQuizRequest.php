@@ -23,7 +23,6 @@ class SubmitQuizRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'integer', 'exists:quiz_attempts,id'],
             'answers' => ['required', 'array', 'min:1'],
             'answers.*.questionId' => ['required', 'integer', 'exists:questions,id', 'distinct'],
             'answers.*.answerId' => ['required', 'integer', 'exists:answers,id'],

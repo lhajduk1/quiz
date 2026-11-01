@@ -92,13 +92,13 @@ class QuizController extends Controller
         return new QuizAttemptResource($result);
     }
 
-    public function submit(SubmitQuizRequest $request): QuizAttemptResource
+    public function submit(SubmitQuizRequest $request, int $id): QuizAttemptResource
     {
         $validated = $request->validated();
 
-        $quizAttempt = DB::transaction(function () use ($validated) {
+        $quizAttempt = DB::transaction(function () use ($validated, $id) {
             $quizAttempt = QuizAttempt::with('quizAttemptQuestions')
-                ->whereId($validated['id'])
+                ->whereId($id)
                 ->lockForUpdate()
                 ->where('status', QuizAttemptStatus::STARTED)
                 ->first();
@@ -153,6 +153,10 @@ class QuizController extends Controller
 
             return $quizAttempt;
         });
+
+        $quizAttempt->quizAttemptQuestions->each(
+            fn($attempt) => $attempt->setRelation('quizAttempt', $quizAttempt)
+        );
 
         return new QuizAttemptResource($quizAttempt);
     }
