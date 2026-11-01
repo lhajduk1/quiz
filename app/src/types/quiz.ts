@@ -34,3 +34,24 @@ export type QuizResult = {
     }[]
 }
 
+export type QuizAttemptQuestion = {
+    questionId: number;
+    questionSnapshot: string;
+    answersSnapshot: Answer[];
+    selectedAnswerId?: number;
+    correctAnswerId?: number;
+    answeredCorrectly?: boolean;
+}
+
+export type QuizAttempt = {
+    id: number;
+    status: "started" | "finished";
+    correctAnswersCount: number | null;
+    questionsCount: number;
+    startedAt: string;
+    finishedAt: string | null;
+    quizAttemptQuestions: QuizAttemptQuestion[];
+}
+
+
+

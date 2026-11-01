@@ -1,10 +1,10 @@
-import type { QuizQuestion, QuizResult } from "@/types/quiz";
+import type { QuizAttempt, QuizQuestion, QuizResult } from "@/types/quiz";
 import { createContext, type Dispatch, type SetStateAction } from "react";
 
 export type QuizContextType = {
-    quizResult: QuizResult | null;
+    quizResult: QuizAttempt | null;
     questions: QuizQuestion[];
-    setQuizResult: Dispatch<SetStateAction<QuizResult | null>>;
+    setQuizResult: Dispatch<SetStateAction<QuizAttempt | null>>;
     setQuestions: Dispatch<SetStateAction<QuizQuestion[]>>;
 }
 

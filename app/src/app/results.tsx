@@ -8,10 +8,11 @@ import QuizButton from "@/components/quiz/QuizButton";
 export default function Results() {
     const router = useRouter();
 
-    const { quizResult, setQuizResult, questions } = useQuizContext();
+    const { quizResult, setQuizResult, questions, setQuestions } = useQuizContext();
 
     function handleRestart(): void {
         setQuizResult(null);
+        setQuestions([]);
         router.replace('/quiz');
     }
 

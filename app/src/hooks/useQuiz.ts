@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import type { ApiErrorResponse, QuizQuestion, QuizResult } from "@/types/quiz";
-import { fetchQuestions, submitQuiz } from "@/services/quizService";
+import type { ApiErrorResponse, QuizAttempt, QuizQuestion, QuizResult } from "@/types/quiz";
+import { createQuizAttempt, fetchQuestions, submitQuiz } from "@/services/quizService";
 import { prepareAnswers } from "@/utils/quiz";
 import axios from "axios";
 import { useQuizContext } from "./useQuizContext";
 
 export function useQuiz() {
+    const [quizAttemptId, setQuizAttemptId] = useState<number | null>(null);
     const { quizResult, setQuizResult, questions, setQuestions } = useQuizContext();
     const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({})
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
@@ -41,11 +42,19 @@ export function useQuiz() {
         setLoadingError(null);
 
         try {
-            const data = await fetchQuestions(signal);
+            const data = await createQuizAttempt(signal);
 
             if (signal?.aborted) return;
 
-            setQuestions(data);
+            setQuizAttemptId(data.id);
+
+            const questions = data.quizAttemptQuestions.map(question => ({
+                id: question.questionId,
+                question: question.questionSnapshot,
+                answers: question.answersSnapshot
+            }));
+
+            setQuestions(questions);
         } catch (error) {
             if (axios.isCancel(error) || signal?.aborted) {
                 return;
@@ -68,11 +77,17 @@ export function useQuiz() {
     }
 
     async function handleSubmitQuiz(): Promise<boolean> {
+        if (quizAttemptId === null) {
+            setSubmitError('quizAttemptId cannot be null');
+            return false;
+        }
+
         setIsSubmitting(true);
         setSubmitError(null);
 
         try {
-            const data = await submitQuiz(prepareAnswers(selectedAnswers));
+
+            const data = await submitQuiz(quizAttemptId, prepareAnswers(selectedAnswers));
 
             setQuizResult(data);
 

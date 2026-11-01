@@ -1,10 +1,10 @@
 
 import { StyleSheet, Text, View } from "react-native";
-import type { QuizQuestion, QuizResult } from "@/types/quiz";
+import type { QuizAttempt, QuizQuestion, QuizResult } from "@/types/quiz";
 
 type QuizResultsProps = {
     questions: QuizQuestion[];
-    result: QuizResult;
+    result: QuizAttempt;
 };
 
 export default function QuizResults({
@@ -14,7 +14,7 @@ export default function QuizResults({
     const percentage =
         result.questionsCount > 0
             ? Math.round(
-                (result.correctAnswersCount / result.questionsCount) * 100
+                ((result.correctAnswersCount ?? 0) / result.questionsCount) * 100
             )
             : 0;
 
@@ -31,7 +31,7 @@ export default function QuizResults({
                 </Text>
 
                 <Text style={styles.score}>
-                    {result.correctAnswersCount}
+                    {result.correctAnswersCount ?? 0}
                     <Text style={styles.scoreTotal}>
                         {" / "}{result.questionsCount}
                     </Text>
@@ -53,9 +53,9 @@ export default function QuizResults({
 
             <Text style={styles.sectionTitle}>Your answers</Text>
 
-            {result.questions.map((questionResult, index) => {
+            {result.quizAttemptQuestions.map((questionResult, index) => {
                 const question = questions.find(
-                    (item) => item.id === questionResult.id
+                    (item) => item.id === questionResult.questionId
                 );
 
                 if (!question) {
@@ -73,7 +73,7 @@ export default function QuizResults({
                 const isCorrect = questionResult.answeredCorrectly;
 
                 return (
-                    <View key={questionResult.id} style={styles.questionCard}>
+                    <View key={questionResult.questionId} style={styles.questionCard}>
                         <View style={styles.questionHeader}>
                             <Text style={styles.questionNumber}>
                                 QUESTION {String(index + 1).padStart(2, "0")}

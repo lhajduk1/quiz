@@ -1,9 +1,9 @@
-import type { QuizQuestion, QuizResult, SubmittedAnswer } from "@/types/quiz";
+import type { ApiResponse, QuizAttempt, QuizQuestion, QuizResult, SubmittedAnswer } from "@/types/quiz";
 import { api } from "./api";
 
 export async function fetchQuestions(signal?: AbortSignal): Promise<QuizQuestion[]> {
 
-    const response = await api.get<{ data: QuizQuestion[] }>(
+    const response = await api.get<ApiResponse<QuizQuestion[]>>(
         '/questions',
         {
             signal,
@@ -16,10 +16,23 @@ export async function fetchQuestions(signal?: AbortSignal): Promise<QuizQuestion
     return response.data.data;
 }
 
-export async function submitQuiz(answers: SubmittedAnswer[]): Promise<QuizResult> {
-    const response = await api.post<{ data: QuizResult }>(
-        '/quiz/submit',
-        { answers }
+export async function submitQuiz(id: number, answers: SubmittedAnswer[]): Promise<QuizAttempt> {
+    const response = await api.post<ApiResponse<QuizAttempt>>(
+        `/quiz/attempts/${id}/submit`,
+        {
+            answers
+        }
+    );
+
+    return response.data.data;
+}
+
+
+export async function createQuizAttempt(signal?: AbortSignal): Promise<QuizAttempt> {
+    const response = await api.post<ApiResponse<QuizAttempt>>(
+        '/quiz/attempts',
+        {},
+        { signal }
     );
 
     return response.data.data;
