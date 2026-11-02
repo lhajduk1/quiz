@@ -53,5 +53,11 @@ export type QuizAttempt = {
     quizAttemptQuestions: QuizAttemptQuestion[];
 }
 
+export type SavedQuizProgress = {
+    quizAttempt: QuizAttempt;
+    selectedAnswers: Record<number, number>;
+    currentQuestionIndex: number;
+};
+
 
 

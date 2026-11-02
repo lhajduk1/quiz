@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
-import type { ApiErrorResponse, QuizAttempt, QuizQuestion, QuizResult } from "@/types/quiz";
-import { createQuizAttempt, fetchQuestions, submitQuiz } from "@/services/quizService";
+import { useState, useEffect, useRef } from "react";
+import type { ApiErrorResponse, QuizAttempt } from "@/types/quiz";
+import { createQuizAttempt, submitQuiz } from "@/services/quizService";
 import { prepareAnswers } from "@/utils/quiz";
 import axios from "axios";
 import { useQuizContext } from "./useQuizContext";
+import { clearQuizProgressQueued, loadQuizProgress, saveQuizProgress, saveQuizProgressQueued } from "@/services/quizStorage";
 
 export function useQuiz() {
-    const [quizAttemptId, setQuizAttemptId] = useState<number | null>(null);
+    const [quizAttempt, setQuizAttempt] = useState<QuizAttempt | null>(null);
     const { quizResult, setQuizResult, questions, setQuestions } = useQuizContext();
     const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({})
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
@@ -46,7 +47,7 @@ export function useQuiz() {
 
             if (signal?.aborted) return;
 
-            setQuizAttemptId(data.id);
+            setQuizAttempt(data);
 
             const questions = data.quizAttemptQuestions.map(question => ({
                 id: question.questionId,
@@ -77,8 +78,8 @@ export function useQuiz() {
     }
 
     async function handleSubmitQuiz(): Promise<boolean> {
-        if (quizAttemptId === null) {
-            setSubmitError('quizAttemptId cannot be null');
+        if (quizAttempt === null) {
+            setSubmitError('quizAttempt cannot be null');
             return false;
         }
 
@@ -86,8 +87,15 @@ export function useQuiz() {
         setSubmitError(null);
 
         try {
+            const data = await submitQuiz(quizAttempt.id, prepareAnswers(selectedAnswers));
 
-            const data = await submitQuiz(quizAttemptId, prepareAnswers(selectedAnswers));
+            setQuizAttempt(data);
+
+            try {
+                await clearQuizProgressQueued();
+            } catch (error) {
+                console.error('Failed to clear quiz progress:', error);
+            }
 
             setQuizResult(data);
 
@@ -119,15 +127,81 @@ export function useQuiz() {
         }
     }
 
+    async function restoreQuizProgress(signal?: AbortSignal): Promise<boolean> {
+        const progress = await loadQuizProgress();
+
+        if (signal?.aborted) {
+            return false;
+        }
+
+        if (progress !== null && progress.quizAttempt.status === 'started') {
+            setQuizAttempt(progress.quizAttempt);
+
+            const questions = progress.quizAttempt.quizAttemptQuestions.map(question => ({
+                id: question.questionId,
+                question: question.questionSnapshot,
+                answers: question.answersSnapshot
+            }));
+
+            setQuestions(questions);
+            setSelectedAnswers(progress.selectedAnswers);
+            setCurrentQuestionIndex(progress.currentQuestionIndex);
+
+            return true;
+        }
+
+        return false;
+    }
+
     useEffect(() => {
         const controller = new AbortController();
 
-        loadQuestions(controller.signal);
+        async function initializeQuiz() {
+            try {
+                const progress = await restoreQuizProgress(controller.signal);
+
+                if (controller.signal.aborted) {
+                    return;
+                }
+
+                if (!progress) {
+                    await loadQuestions(controller.signal);
+                }
+
+            } catch (error) {
+                setLoadingError('An unexpected initialization error occurred.');
+            } finally {
+                if (controller.signal.aborted) {
+                    return;
+                }
+
+                setIsLoading(false);
+            }
+        }
+
+        initializeQuiz();
 
         return () => {
             controller.abort();
         }
     }, []);
+
+    useEffect(() => {
+        if (
+            quizAttempt !== null
+            && quizAttempt.status === 'started'
+            && !isLoading
+            && !isSubmitting
+        ) {
+            saveQuizProgressQueued({
+                quizAttempt,
+                selectedAnswers,
+                currentQuestionIndex
+            }).catch((error) => {
+                console.error('Failed to save quiz progress:', error);
+            });
+        }
+    }, [quizAttempt, selectedAnswers, currentQuestionIndex, isLoading, isSubmitting]);
 
     return {
         questions,
