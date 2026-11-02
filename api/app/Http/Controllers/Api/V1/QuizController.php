@@ -5,16 +5,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\QuizAttemptStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SubmitQuizRequest;
-use App\Http\Resources\QuestionResource;
 use App\Http\Resources\QuizAttemptResource;
-use App\Models\Answer;
 use App\Models\Question;
 use App\Models\QuizAttempt;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -24,17 +20,11 @@ class QuizController extends Controller
 {
     private const int LIMIT = 10;
 
-    public function index(Request $request): AnonymousResourceCollection
+    public function show(QuizAttempt $quizAttempt): QuizAttemptResource
     {
-        $limit = $request->integer('limit', 10);
-        $limit = max(1, min($limit, 50));
+        $quizAttempt->load('quizAttemptQuestions.quizAttempt');
 
-        $questions = Question::with('answers')
-            ->inRandomOrder()
-            ->limit($limit)
-            ->get();
-
-        return QuestionResource::collection($questions);
+        return new QuizAttemptResource($quizAttempt);
     }
 
     public function store(Request $request): QuizAttemptResource
