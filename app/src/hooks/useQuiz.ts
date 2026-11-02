@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import type { ApiErrorResponse, QuizAttempt } from "@/types/quiz";
-import { createQuizAttempt, submitQuiz } from "@/services/quizService";
+import { createQuizAttempt, getQuizAttempt, submitQuiz } from "@/services/quizService";
 import { prepareAnswers } from "@/utils/quiz";
 import axios from "axios";
 import { useQuizContext } from "./useQuizContext";
-import { clearQuizProgressQueued, loadQuizProgress, saveQuizProgress, saveQuizProgressQueued } from "@/services/quizStorage";
+import { clearQuizProgressQueued, loadQuizProgress, saveQuizProgressQueued } from "@/services/quizStorage";
 
 export function useQuiz() {
     const [quizAttempt, setQuizAttempt] = useState<QuizAttempt | null>(null);
@@ -18,6 +18,7 @@ export function useQuiz() {
     const [loadingError, setLoadingError] = useState<string | null>(null);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const controllerRef = useRef<AbortController | null>(null);
 
     function selectAnswer(questionId: number, answerId: number): void {
         setSelectedAnswers((previous) => ({
@@ -39,42 +40,19 @@ export function useQuiz() {
     }
 
     async function loadQuestions(signal?: AbortSignal): Promise<void> {
-        setIsLoading(true);
-        setLoadingError(null);
+        const data = await createQuizAttempt(signal);
 
-        try {
-            const data = await createQuizAttempt(signal);
+        if (signal?.aborted) return;
 
-            if (signal?.aborted) return;
+        setQuizAttempt(data);
 
-            setQuizAttempt(data);
+        const questions = data.quizAttemptQuestions.map(question => ({
+            id: question.questionId,
+            question: question.questionSnapshot,
+            answers: question.answersSnapshot
+        }));
 
-            const questions = data.quizAttemptQuestions.map(question => ({
-                id: question.questionId,
-                question: question.questionSnapshot,
-                answers: question.answersSnapshot
-            }));
-
-            setQuestions(questions);
-        } catch (error) {
-            if (axios.isCancel(error) || signal?.aborted) {
-                return;
-            }
-
-            if (axios.isAxiosError(error)) {
-                setLoadingError(
-                    error.response
-                        ? `HTTP error: ${error.response.status}`
-                        : error.message
-                );
-            } else {
-                setLoadingError('An unexpected error occurred.');
-            }
-        } finally {
-            if (!signal?.aborted) {
-                setIsLoading(false);
-            }
-        }
+        setQuestions(questions);
     }
 
     async function handleSubmitQuiz(): Promise<boolean> {
@@ -129,15 +107,36 @@ export function useQuiz() {
 
     async function restoreQuizProgress(signal?: AbortSignal): Promise<boolean> {
         const progress = await loadQuizProgress();
+        let quizAttempt: QuizAttempt
+
+        if (progress === null) {
+            return false;
+        }
+
+        try {
+            quizAttempt = await getQuizAttempt(progress.quizAttempt.id, signal)
+        } catch (error) {
+            if (signal?.aborted) {
+                return false;
+            }
+
+            if (axios.isAxiosError<ApiErrorResponse>(error) && error.response?.status === 404) {
+                await clearQuizProgressQueued();
+
+                return false;
+            }
+
+            throw error;
+        }
 
         if (signal?.aborted) {
             return false;
         }
 
-        if (progress !== null && progress.quizAttempt.status === 'started') {
-            setQuizAttempt(progress.quizAttempt);
+        if (quizAttempt.status === 'started') {
+            setQuizAttempt(quizAttempt);
 
-            const questions = progress.quizAttempt.quizAttemptQuestions.map(question => ({
+            const questions = quizAttempt.quizAttemptQuestions.map(question => ({
                 id: question.questionId,
                 question: question.questionSnapshot,
                 answers: question.answersSnapshot
@@ -150,39 +149,60 @@ export function useQuiz() {
             return true;
         }
 
+        await clearQuizProgressQueued();
+
         return false;
     }
 
-    useEffect(() => {
-        const controller = new AbortController();
+    async function initializeQuiz(signal?: AbortSignal) {
+        setIsLoading(true);
+        setLoadingError(null);
 
-        async function initializeQuiz() {
-            try {
-                const progress = await restoreQuizProgress(controller.signal);
+        try {
+            const progress = await restoreQuizProgress(signal);
 
-                if (controller.signal.aborted) {
-                    return;
-                }
+            if (signal?.aborted) {
+                return;
+            }
 
-                if (!progress) {
-                    await loadQuestions(controller.signal);
-                }
+            if (!progress) {
+                await loadQuestions(signal);
+            }
 
-            } catch (error) {
+        } catch (error) {
+            if (signal?.aborted || axios.isCancel(error)) {
+                return;
+            }
+
+            if (axios.isAxiosError(error)) {
+                setLoadingError(
+                    error.response
+                        ? `HTTP error: ${error.response.status}`
+                        : error.message
+                );
+            } else {
                 setLoadingError('An unexpected initialization error occurred.');
-            } finally {
-                if (controller.signal.aborted) {
-                    return;
-                }
-
+            }
+        } finally {
+            if (!signal?.aborted) {
                 setIsLoading(false);
             }
         }
+    }
 
-        initializeQuiz();
+    function retryQuizInitialization() {
+        controllerRef.current?.abort();
+
+        controllerRef.current = new AbortController();
+
+        initializeQuiz(controllerRef.current.signal);
+    }
+
+    useEffect(() => {
+        retryQuizInitialization();
 
         return () => {
-            controller.abort();
+            controllerRef.current?.abort();
         }
     }, []);
 
@@ -218,7 +238,7 @@ export function useQuiz() {
         selectAnswer,
         nextQuestion,
         previousQuestion,
-        loadQuestions,
-        handleSubmitQuiz
+        handleSubmitQuiz,
+        retryQuizInitialization
     };
 }

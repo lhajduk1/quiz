@@ -22,8 +22,8 @@ export default function Quiz() {
     selectAnswer,
     nextQuestion,
     previousQuestion,
-    loadQuestions,
-    handleSubmitQuiz
+    handleSubmitQuiz,
+    retryQuizInitialization
   } = useQuiz();
 
   async function handleFinish(): Promise<void> {
@@ -33,6 +33,7 @@ export default function Quiz() {
       router.replace('/results');
     }
   }
+
 
   if (isLoading) {
     return (
@@ -48,7 +49,7 @@ export default function Quiz() {
         <Text>{loadingError}</Text>
         <QuizButton
           label="Try again"
-          onPress={loadQuestions}
+          onPress={retryQuizInitialization}
         />
       </View>
     )
