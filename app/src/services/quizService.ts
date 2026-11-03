@@ -1,4 +1,4 @@
-import type { ApiResponse, QuizAttempt, QuizQuestion, SubmittedAnswer } from "@/types/quiz";
+import type { ApiResponse, QuizAttempt, QuizAttemptHistoryItem, QuizQuestion, SubmittedAnswer } from "@/types/quiz";
 import { api } from "./api";
 
 export async function fetchQuestions(signal?: AbortSignal): Promise<QuizQuestion[]> {
@@ -43,6 +43,15 @@ export async function getQuizAttempt(
 ): Promise<QuizAttempt> {
     const response = await api.get<ApiResponse<QuizAttempt>>(
         `/quiz/attempts/${id}`,
+        { signal }
+    );
+
+    return response.data.data;
+}
+
+export async function getQuizAttempts(signal?: AbortSignal): Promise<QuizAttemptHistoryItem[]> {
+    const response = await api.get<ApiResponse<QuizAttemptHistoryItem[]>>(
+        'quiz/attempts',
         { signal }
     );
 

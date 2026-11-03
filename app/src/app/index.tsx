@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import QuizButton from "@/components/quiz/QuizButton";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
+import { FontAwesome6 } from "@react-native-vector-icons/fontawesome6";
 
 export default function Home() {
     const router = useRouter();
@@ -33,10 +34,25 @@ export default function Home() {
                     </Text>
                 </View>
 
-                <QuizButton
-                    label="Start Quiz"
-                    onPress={handleStartQuiz}
-                />
+                <View>
+                    <QuizButton
+                        label="Start Quiz"
+                        onPress={handleStartQuiz}
+                    />
+
+                    <Pressable
+                        onPress={() => router.push('/history')}
+                        style={({ pressed }) => [
+                            styles.historyButton,
+                            pressed && styles.historyButtonPressed,
+                        ]}
+                    >
+                        <FontAwesome6 name="clock-rotate-left" iconStyle="solid" size={16} color="#4F46E5" />
+                        <Text style={styles.historyButtonText}>
+                            Historia podejść
+                        </Text>
+                    </Pressable>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -95,4 +111,28 @@ const styles = StyleSheet.create({
         color: "#85899B",
         textAlign: "center",
     },
+    historyButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#C7D2FE',
+        borderRadius: 14,
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+        marginTop: 16,
+    },
+    historyButtonPressed: {
+        backgroundColor: '#EEF2FF',
+        opacity: 0.85,
+    },
+    historyButtonText: {
+        color: '#4F46E5',
+        fontSize: 15,
+        fontWeight: '600',
+    },
+
 });

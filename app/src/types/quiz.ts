@@ -59,5 +59,14 @@ export type SavedQuizProgress = {
     currentQuestionIndex: number;
 };
 
+export type QuizAttemptHistoryItem = {
+    id: number;
+    status: "finished";
+    correctAnswersCount: number;
+    questionsCount: number;
+    startedAt: string;
+    finishedAt: string;
+}
+
 
 
