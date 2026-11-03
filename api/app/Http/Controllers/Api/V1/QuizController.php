@@ -20,6 +20,16 @@ class QuizController extends Controller
 {
     private const int LIMIT = 10;
 
+    public function index()
+    {
+        $quizAttempts = QuizAttempt::query()
+            ->where('status', 'finished')
+            ->latest('created_at')
+            ->get();
+
+        return QuizAttemptResource::collection($quizAttempts);
+    }
+
     public function show(QuizAttempt $quizAttempt): QuizAttemptResource
     {
         $quizAttempt->load('quizAttemptQuestions.quizAttempt');
