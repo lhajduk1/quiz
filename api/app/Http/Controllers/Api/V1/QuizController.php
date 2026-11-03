@@ -85,7 +85,7 @@ class QuizController extends Controller
             }
 
             return $quizAttempt->load([
-                'quizAttemptQuestions' => fn($query) => $query->orderBy('poistion')
+                'quizAttemptQuestions' => fn($query) => $query->orderBy('position')
             ]);
         });
 
