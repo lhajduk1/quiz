@@ -27,8 +27,6 @@ export default function HistoryDetails() {
 
             if (signal.aborted) return;
 
-            console.log('Attempt details:', JSON.stringify(data, null, 2));
-
             setAttempt(data);
         } catch (error) {
             if (signal.aborted || axios.isCancel(error)) {
