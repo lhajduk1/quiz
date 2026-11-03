@@ -105,7 +105,7 @@ class QuizController extends Controller
 
             if (!$quizAttempt) {
                 throw ValidationException::withMessages([
-                    'id' => "Quiz attempt not found with given id: {$validated['id']} or was finished."
+                    'id' => "Quiz attempt not found with given id: {$id} or was finished."
                 ]);
             }
 
