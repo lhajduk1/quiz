@@ -48,9 +48,7 @@ class QuizController extends Controller
             ->get();
 
         if ($questions->count() < self::LIMIT) {
-            throw new Exception(
-                'Must be ' . self::LIMIT . ' valid questions.'
-            );
+            abort(409, 'Must be ' . self::LIMIT . ' valid questions.');
         }
 
         $result = DB::transaction(function () use ($questions) {
