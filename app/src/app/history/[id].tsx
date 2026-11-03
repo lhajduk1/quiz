@@ -66,7 +66,7 @@ export default function HistoryDetails() {
     if (!isValidId) {
         return (
             <SafeAreaView>
-                <Text>Nieprawidłowy identyfikator podejścia.</Text>
+                <Text>Invalid attempt identifier.</Text>
             </SafeAreaView>
         );
     }
@@ -90,7 +90,7 @@ export default function HistoryDetails() {
     if (attempt === null) {
         return (
             <SafeAreaView>
-                <Text>Nie znaleziono podejścia.</Text>
+                <Text>No attempt was found.</Text>
             </SafeAreaView>
         );
     }
@@ -119,12 +119,12 @@ export default function HistoryDetails() {
                             <View style={styles.cardRow}>
                                 <View>
                                     <Text style={styles.cardTitle}>
-                                        Podejście #{attempt.id}
+                                        Attempt #{attempt.id}
                                     </Text>
                                     <Text style={styles.date}>
                                         {attempt.finishedAt
                                             ? new Date(attempt.finishedAt).toLocaleDateString('pl-PL')
-                                            : 'Nie ukończono'}
+                                            : 'Not finished'}
                                     </Text>
                                 </View>
 
@@ -133,7 +133,7 @@ export default function HistoryDetails() {
                                         {attempt.correctAnswersCount}/{attempt.questionsCount}
                                     </Text>
                                     <Text style={styles.percentage}>
-                                        {percentage}% poprawnych
+                                        {percentage}% correct
                                     </Text>
                                 </View>
                             </View>

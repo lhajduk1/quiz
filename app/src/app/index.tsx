@@ -49,7 +49,7 @@ export default function Home() {
                     >
                         <FontAwesome6 name="clock-rotate-left" iconStyle="solid" size={16} color="#4F46E5" />
                         <Text style={styles.historyButtonText}>
-                            Historia podejść
+                            History of attempts
                         </Text>
                     </Pressable>
                 </View>

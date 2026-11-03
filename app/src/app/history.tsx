@@ -85,25 +85,25 @@ export default function History() {
                 ListHeaderComponent={
                     <>
                         <View style={styles.header}>
-                            <Text style={styles.title}>Historia quizów</Text>
+                            <Text style={styles.title}>The History of Quizzes</Text>
                             <Text style={styles.subtitle}>
-                                Twoje poprzednie podejścia i wyniki
+                                Your previous attempts and results
                             </Text>
                         </View>
 
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>
-                                Ostatnie podejścia
+                                Last attempts
                             </Text>
                             <Text style={styles.count}>
-                                Łącznie: {attempts.length}
+                                Total: {attempts.length}
                             </Text>
                         </View>
                     </>
                 }
                 ListEmptyComponent={
                     <Text style={styles.message}>
-                        Historia jest pusta. Rozwiąż swój pierwszy quiz!
+                        The history section is empty. Take your first quiz!
                     </Text>
                 }
                 renderItem={({ item }) => {
@@ -124,7 +124,7 @@ export default function History() {
                             <View style={styles.cardRow}>
                                 <View>
                                     <Text style={styles.cardTitle}>
-                                        Podejście #{item.id}
+                                        Attempt #{item.id}
                                     </Text>
                                     <Text style={styles.date}>
                                         {new Date(item.finishedAt).toLocaleDateString('pl-PL')}
@@ -136,7 +136,7 @@ export default function History() {
                                         {item.correctAnswersCount}/{item.questionsCount}
                                     </Text>
                                     <Text style={styles.percentage}>
-                                        {percentage}% poprawnych
+                                        {percentage}% correct
                                     </Text>
                                 </View>
                             </View>
