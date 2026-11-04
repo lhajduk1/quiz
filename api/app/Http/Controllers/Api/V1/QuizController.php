@@ -96,17 +96,12 @@ class QuizController extends Controller
 
         $quizAttempt = DB::transaction(function () use ($validated, $id) {
             $quizAttempt = QuizAttempt::with('quizAttemptQuestions')
-                ->whereId($id)
                 ->lockForUpdate()
-                ->where('status', QuizAttemptStatus::STARTED)
-                ->first();
+                ->findOrFail($id);
 
-            if (!$quizAttempt) {
-                throw ValidationException::withMessages([
-                    'id' => "Quiz attempt not found with given id: {$id} or was finished."
-                ]);
+            if ($quizAttempt->status !== QuizAttemptStatus::STARTED) {
+                abort(409, 'Quiz attempt is not available for submission.');
             }
-
 
             if ($quizAttempt->questions_count !== count($validated['answers'])) {
                 throw ValidationException::withMessages([
@@ -116,8 +111,11 @@ class QuizController extends Controller
 
             $correctAnswersCount = 0;
 
+            $questionsById = $quizAttempt->quizAttemptQuestions
+                ->keyBy('question_id');
+
             foreach ($validated['answers'] as $index => $answer) {
-                $questionAttempt = $quizAttempt->quizAttemptQuestions->firstWhere('question_id', $answer['questionId']);
+                $questionAttempt = $questionsById->get($answer['questionId']);
 
                 if (!$questionAttempt) {
                     throw ValidationException::withMessages([
